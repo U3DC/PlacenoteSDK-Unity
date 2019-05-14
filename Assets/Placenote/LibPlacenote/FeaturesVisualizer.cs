@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json.Linq;
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using UnityEditor;
 using UnityEngine.XR.iOS;
 using UnityEngine.Rendering;
 
@@ -39,7 +41,6 @@ public class FeaturesVisualizer : MonoBehaviour, PlacenoteListener
 	private bool mEnabled = false;
 
 	[SerializeField] Material mPtCloudMat;
-	[SerializeField] Material mMeshMat;
 	[SerializeField] GameObject mMap;
 	[SerializeField] GameObject mPointCloud;
 	[SerializeField] bool mEnableMapPoints = false;
@@ -228,7 +229,6 @@ public class FeaturesVisualizer : MonoBehaviour, PlacenoteListener
 		return dist > (mMeshVisualizationRadius - 0.4f);
 	}
 
-
 	public void OnDenseMeshBlocks(Dictionary<LibPlacenote.PNMeshBlockIndex, LibPlacenote.PNMeshBlock> meshBlocks) {
 		if (!LibPlacenote.Instance.Initialized()) {
 			return;
@@ -241,11 +241,12 @@ public class FeaturesVisualizer : MonoBehaviour, PlacenoteListener
 
 		foreach (KeyValuePair<LibPlacenote.PNMeshBlockIndex, LibPlacenote.PNMeshBlock> entry in meshBlocks) {
 			// Create GameObject container with mesh components for the loaded mesh.
-			GameObject meshObj = null;
+			GameObject meshObj;
 			if (mMeshBlocks.ContainsKey (entry.Key)) {
 				meshObj = mMeshBlocks[entry.Key];
 			} else {
-				meshObj = GameObject.Instantiate(mPointCloud);
+				meshObj = Instantiate(mPointCloud, mMap.transform, true );
+				meshObj.layer = LayerMask.NameToLayer( "Map" );
 				mMeshBlocks.Add (entry.Key, meshObj);
 				mMeshBlockStatus.Add (entry.Key, true);
 			}
@@ -255,20 +256,19 @@ public class FeaturesVisualizer : MonoBehaviour, PlacenoteListener
 				mf = meshObj.AddComponent<MeshFilter> ();
 				mf.mesh = new Mesh();
 			}
-			mf.mesh.Clear ();
-			mf.mesh.vertices = entry.Value.points;
-			mf.mesh.SetIndices (entry.Value.indices, MeshTopology.Triangles, 0);
-			mf.mesh.RecalculateNormals ();
 
-			LibPlacenote.PNMeshBlockIndex block = entry.Key;
+			Mesh mesh = mf.mesh;
+			
+			mesh.Clear ();
+			mesh.vertices = entry.Value.points;
+			mesh.SetIndices (entry.Value.indices, MeshTopology.Triangles, 0);
+			mesh.RecalculateNormals ();
+
 			MeshRenderer mr = meshObj.GetComponent<MeshRenderer> ();
 			if (mr == null) {
 				mr = meshObj.AddComponent<MeshRenderer> ();
 			}
-
-			m_ClearMaterial.SetTexture ("_textureCbCr", arVideo._videoTextureCbCr);
-			m_ClearMaterial.SetTexture ("_textureY", arVideo._videoTextureY);
-			m_ClearMaterial.SetMatrix ("_DisplayTransform", _displayTransform);
+			
 			mr.material = m_ClearMaterial;
 		}
 	}

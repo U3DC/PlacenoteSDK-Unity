@@ -8,15 +8,18 @@ using System.Runtime.InteropServices;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using UnityEditor;
 
 public class PlacenoteSampleView : MonoBehaviour, PlacenoteListener
 {
 	[SerializeField] GameObject mMapSelectedPanel;
 	[SerializeField] GameObject mInitButtonPanel;
 	[SerializeField] GameObject mMappingButtonPanel;
+	[SerializeField] GameObject mStopTrackingPanel;
 	[SerializeField] GameObject mMapListPanel;
 	[SerializeField] GameObject mExitButton;
 	[SerializeField] GameObject mListElement;
+	[SerializeField] Mapper mMapper;
 	[SerializeField] RectTransform mListContentParent;
 	[SerializeField] ToggleGroup mToggleGroup;
 	[SerializeField] GameObject mPlaneDetectionToggle;
@@ -287,7 +290,14 @@ public class PlacenoteSampleView : MonoBehaviour, PlacenoteListener
 		});
 	}
 
-
+	public void OnStopTrackingClick()
+	{
+		LibPlacenote.Instance.StopSession();
+        mStopTrackingPanel.SetActive( false );
+		mMappingButtonPanel.SetActive( true );
+		
+		mMapper.StartMapping();
+	}
 
 	public void OnNewMapClick ()
 	{
@@ -297,9 +307,10 @@ public class PlacenoteSampleView : MonoBehaviour, PlacenoteListener
 			Debug.Log ("SDK not yet initialized");
 			return;
 		}
+		
 
 		mInitButtonPanel.SetActive (false);
-		mMappingButtonPanel.SetActive (true);
+		mStopTrackingPanel.SetActive (true);
 		mPlaneDetectionToggle.SetActive (true);
 		Debug.Log ("Started Session");
 		LibPlacenote.Instance.StartSession ();
@@ -357,64 +368,70 @@ public class PlacenoteSampleView : MonoBehaviour, PlacenoteListener
  		#endif
 	}
 
-
 	public void OnSaveMapClick ()
 	{
-		if (!LibPlacenote.Instance.Initialized()) {
-			Debug.Log ("SDK not yet initialized");
-			return;
-		}
+		//if (!LibPlacenote.Instance.Initialized()) {
+		//	Debug.Log ("SDK not yet initialized");
+		//	return;
+		//}
 
-		bool useLocation = Input.location.status == LocationServiceStatus.Running;
-		LocationInfo locationInfo = Input.location.lastData;
+		//bool useLocation = Input.location.status == LocationServiceStatus.Running;
+		//LocationInfo locationInfo = Input.location.lastData;
 
-		mLabelText.text = "Saving...";
-		LibPlacenote.Instance.SaveMap (
-			(mapId) => {
-				LibPlacenote.Instance.StopSession ();
-				mSaveMapId = mapId;
-				mInitButtonPanel.SetActive (true);
-				mMappingButtonPanel.SetActive (false);
-				mExitButton.SetActive(false);
-				mPlaneDetectionToggle.SetActive (false);
+		//mLabelText.text = "Saving...";
+		//LibPlacenote.Instance.SaveMap (
+		//	(mapId) => {
+		//		LibPlacenote.Instance.StopSession ();
+		//		mSaveMapId = mapId;
+		//		mInitButtonPanel.SetActive (true);
+		//		mMappingButtonPanel.SetActive (false);
+		//		mExitButton.SetActive(false);
+		//		mPlaneDetectionToggle.SetActive (false);
 
-				//clear all existing planes
-				mPNPlaneManager.ClearPlanes ();
-				mPlaneDetectionToggle.GetComponent<Toggle>().isOn = false;
+		//		//clear all existing planes
+		//		mPNPlaneManager.ClearPlanes ();
+		//		mPlaneDetectionToggle.GetComponent<Toggle>().isOn = false;
 
-				LibPlacenote.MapMetadataSettable metadata = new LibPlacenote.MapMetadataSettable();
-				metadata.name = RandomName.Get ();
-				mLabelText.text = "Saved Map Name: " + metadata.name;
+		//		LibPlacenote.MapMetadataSettable metadata = new LibPlacenote.MapMetadataSettable();
+		//		metadata.name = RandomName.Get ();
+		//		mLabelText.text = "Saved Map Name: " + metadata.name;
 
-				JObject userdata = new JObject ();
-				metadata.userdata = userdata;
+		//		JObject userdata = new JObject ();
+		//		metadata.userdata = userdata;
 
-                JObject shapeList = GetComponent<ShapeManager>().Shapes2JSON();
+        //        JObject shapeList = GetComponent<ShapeManager>().Shapes2JSON();
 
-				userdata["shapeList"] = shapeList;
+		//		userdata["shapeList"] = shapeList;
 
-				if (useLocation) {
-					metadata.location = new LibPlacenote.MapLocation();
-					metadata.location.latitude = locationInfo.latitude;
-					metadata.location.longitude = locationInfo.longitude;
-					metadata.location.altitude = locationInfo.altitude;
-				}
+		//		if (useLocation) {
+		//			metadata.location = new LibPlacenote.MapLocation();
+		//			metadata.location.latitude = locationInfo.latitude;
+		//			metadata.location.longitude = locationInfo.longitude;
+		//			metadata.location.altitude = locationInfo.altitude;
+		//		}
 
-				LibPlacenote.Instance.SetMetadata (mapId, metadata);
-				mCurrMapDetails = metadata;
-			},
-			(completed, faulted, percentage) => {
-				if (completed) {
-					mLabelText.text = "Upload Complete:" + mCurrMapDetails.name;
-				}
-				else if (faulted) {
-					mLabelText.text = "Upload of Map Named: " + mCurrMapDetails.name + "faulted";
-				}
-				else {
-					mLabelText.text = "Uploading Map Named: " + mCurrMapDetails.name + "(" + percentage.ToString("F2") + "/1.0)";
-				}
-			}
-		);
+		//		LibPlacenote.Instance.SetMetadata (mapId, metadata);
+		//		mCurrMapDetails = metadata;
+		//	},
+		//	(completed, faulted, percentage) => {
+		//		if (completed) {
+		//			mLabelText.text = "Upload Complete:" + mCurrMapDetails.name;
+		//		}
+		//		else if (faulted) {
+		//			mLabelText.text = "Upload of Map Named: " + mCurrMapDetails.name + "faulted";
+		//		}
+		//		else {
+		//			mLabelText.text = "Uploading Map Named: " + mCurrMapDetails.name + "(" + percentage.ToString("F2") + "/1.0)";
+		//		}
+		//	}
+		//);
+        mMapper.StopMapping();
+		string fname = Guid.NewGuid() + ".fbx";
+		string fpath = Path.Combine( Application.persistentDataPath, fname );
+		UnityFBXExporter.FBXExporter.ExportGameObjToFBX( mMapper.gameObject, fpath );
+		Debug.Log( Application.persistentDataPath );
+		mLabelText.text = "Saved as " + fname;
+        new NativeShare().AddFile( fpath ).Share();
 	}
 		
 
