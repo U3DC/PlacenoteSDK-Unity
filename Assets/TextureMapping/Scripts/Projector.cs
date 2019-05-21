@@ -6,10 +6,10 @@ using UnityEngine;
 public class Projector : MonoBehaviour
 {
     /// <summary>
-    /// Resulting vertices (UVs)
+    /// Result vertices. Actually UVs
     /// </summary>
     public Vector2[] ProjectedVertices{ get; private set; }
-
+    
     private Vector2 min;
     private Vector2 max;
 
@@ -36,19 +36,10 @@ public class Projector : MonoBehaviour
 
     private Camera camera;
 
-    private void Start()
+    private void Awake()
     {
         camera = Camera.main;
         aspect_coef = new Vector2( 1, (float) Screen.height / Screen.width );
-    }
-
-    /// <summary>
-    /// Prepares vertices after mesh is finalized
-    /// </summary>
-    public void Prepare()
-    {
-        vertices = GetComponent<MeshFilter>().sharedMesh.vertices.Select( v => transform.position + transform.rotation * v ).ToList();
-        ProjectedVertices = new Vector2[vertices.Count];
     }
 
     /// <summary>
@@ -56,8 +47,19 @@ public class Projector : MonoBehaviour
     /// </summary>
     public void Recalculate()
     {
+        vertices = GetComponent<MeshFilter>().sharedMesh.vertices.Select( v => transform.position + transform.rotation * v ).ToList();
+        ProjectedVertices = new Vector2[vertices.Count];
+
+        if( vertices.Count == 0 )
+        {
+            min = Vector2.zero;
+            max = Vector2.zero;
+            return;
+        }
+        
         min = new Vector2( float.MaxValue, float.MaxValue );
         max = new Vector2( float.MinValue, float.MinValue );
+        
         for( int i = 0; i < vertices.Count; i++ )
         {
             ProjectedVertices[i] = camera.WorldToViewportPoint( vertices[i] ) * aspect_coef;
@@ -72,13 +74,14 @@ public class Projector : MonoBehaviour
             if( ProjectedVertices[i].y > max.y )
                 max.y = ProjectedVertices[i].y;
         }
-
+        
         Vector2 dv = Vector2.one / ( max - min );
         
         for( int i = 0; i < vertices.Count; i++ )
         {
             ProjectedVertices[i] -= min;
             ProjectedVertices[i] *= dv;
+            //ProjectedVertices[i] = ProjectedVertices[i].Clamp01();
         }
     }
 }

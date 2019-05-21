@@ -12,12 +12,11 @@ public class ViewUnwrapper : MonoBehaviour
     
     private void Start()
     {
-        mesh = GetComponent<MeshFilter>().sharedMesh;
         proj = GetComponent<Projector>();
     }
 
     public void RecalculateUVs()
     {
-        mesh.SetUVs( 0, proj.ProjectedVertices.ToList() );
+        GetComponent<MeshFilter>().sharedMesh.SetUVs( 0, proj.ProjectedVertices.ToList() );
     }
 }

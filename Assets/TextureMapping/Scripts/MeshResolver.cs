@@ -19,6 +19,9 @@ public class MeshResolver : MonoBehaviour
     /// <returns></returns>
     public Rect GetScreenRect()
     {
+        //Vector2 min = ( proj.Min / proj.AspectCoef ).Clamp01() * screen_size;
+        //Vector2 max = ( proj.Max / proj.AspectCoef ).Clamp01() * screen_size;
+        
         Vector2 min = proj.Min / proj.AspectCoef * screen_size;
         Vector2 max = proj.Max / proj.AspectCoef * screen_size;
 

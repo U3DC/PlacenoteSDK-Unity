@@ -295,8 +295,6 @@ public class PlacenoteSampleView : MonoBehaviour, PlacenoteListener
 		LibPlacenote.Instance.StopSession();
         mStopTrackingPanel.SetActive( false );
 		mMappingButtonPanel.SetActive( true );
-		
-		mMapper.StartMapping();
 	}
 
 	public void OnNewMapClick ()
@@ -399,7 +397,7 @@ public class PlacenoteSampleView : MonoBehaviour, PlacenoteListener
 		//		JObject userdata = new JObject ();
 		//		metadata.userdata = userdata;
 
-        //        JObject shapeList = GetComponent<ShapeManager>().Shapes2JSON();
+        //      JObject shapeList = GetComponent<ShapeManager>().Shapes2JSON();
 
 		//		userdata["shapeList"] = shapeList;
 
@@ -425,7 +423,6 @@ public class PlacenoteSampleView : MonoBehaviour, PlacenoteListener
 		//		}
 		//	}
 		//);
-        mMapper.StopMapping();
 		string fname = Guid.NewGuid() + ".fbx";
 		string fpath = Path.Combine( Application.persistentDataPath, fname );
 		UnityFBXExporter.FBXExporter.ExportGameObjToFBX( mMapper.gameObject, fpath );
